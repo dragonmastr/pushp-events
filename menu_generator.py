@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
@@ -458,7 +458,7 @@ def generate_menu_pdf(
     output_path = Path(output_path)
 
     if template_path is None:
-        template_path = BASE_DIR / "data" / "menu_template.xlsx"
+        template_path = None
 
     event_info = read_event_info(excel_path)
 
@@ -548,7 +548,8 @@ def generate_menu_pdf(
 
     HTML(string=html_out, base_url=str(BASE_DIR)).write_pdf(str(output_path))
 
-    ensure_template_exists(Path(template_path), excel_path)
+    if template_path:
+        ensure_template_exists(Path(template_path), excel_path)
 
     return output_path
 
@@ -565,7 +566,7 @@ def generate_menu_pdfs(excel_path: Path) -> Tuple[Path, Path]:
     event_name = clean(event_info.get("event_name")) or "Menu"
     event_name_hi = clean(event_info.get("event_name_hi")) or event_name
 
-    output_dir = excel_path.parent / "output"
+    output_dir = BASE_DIR / "Generated-menu" / excel_path.stem
     output_dir.mkdir(parents=True, exist_ok=True)
 
     base_en = safe_filename(event_name)
@@ -596,6 +597,77 @@ def generate_menu_pdfs(excel_path: Path) -> Tuple[Path, Path]:
     return output_en, output_hi
 
 
+def create_template_excel(path: Path) -> None:
+    path = Path(path)
+    wb = Workbook()
+
+    # event_info
+    ws_event = wb.active
+    ws_event.title = "event_info"
+    ws_event.append(["key", "value"])
+    keys = [
+        "event_name",
+        "event_name_hi",
+        "client_name",
+        "client_name_hi",
+        "venue",
+        "venue_hi",
+        "city",
+        "start_date",
+        "end_date",
+        "branding_name",
+        "contact_phone",
+        "total_pax",
+        "planner_name",
+        "planner_name_hi",
+        "caterer_name",
+        "caterer_name_hi",
+        "logo_path",
+    ]
+    for key in keys:
+        if key == "total_pax":
+            ws_event.append([key, '=IFERROR(MAX(meal_counts!C:C), "")'])
+        else:
+            ws_event.append([key, ""])
+
+    # menu sheet
+    ws_menu = wb.create_sheet("menu")
+    ws_menu.append(["date", "meal", "category", "item"])
+
+    formula_total = (
+        '(INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0)) - '
+        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + 1) * 4'
+    )
+    formula_date = (
+        '=IFERROR(IF(ROW()-1 <= {total}, '
+        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + INT((ROW()-2)/4), ""), "")'
+    ).format(total=formula_total)
+    formula_meal = (
+        '=IFERROR(IF(ROW()-1 <= {total}, '
+        'CHOOSE(MOD(ROW()-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
+    ).format(total=formula_total)
+
+    for row_idx in range(2, 1502):
+        ws_menu[f"A{row_idx}"].value = formula_date
+        ws_menu[f"B{row_idx}"].value = formula_meal
+
+    # meal_counts sheet
+    ws_counts = wb.create_sheet("meal_counts")
+    ws_counts.append(["date", "meal", "count"])
+    formula_count = (
+        '=IFERROR(IF(ROW()-1 <= {total}, '
+        'INDEX(event_info!B:B, MATCH("total_pax", event_info!A:A, 0)), ""), "")'
+    ).format(total=formula_total)
+
+    for row_idx in range(2, 1502):
+        ws_counts[f"A{row_idx}"].value = formula_date
+        ws_counts[f"B{row_idx}"].value = formula_meal
+        ws_counts[f"C{row_idx}"].value = formula_count
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(path)
+
+
 # ---------------- RESET ----------------
 
 def reset_excel(
@@ -604,18 +676,10 @@ def reset_excel(
     create_new: bool = True,
 ) -> Path:
     excel_path = Path(excel_path)
-    if template_path is None:
-        template_path = BASE_DIR / "data" / "menu_template.xlsx"
-
-    template_path = Path(template_path)
-    if not template_path.exists():
-        template_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(excel_path, template_path)
-
     if create_new:
         reset_path = excel_path.parent / f"{excel_path.stem}_reset.xlsx"
-        shutil.copy2(template_path, reset_path)
+        create_template_excel(reset_path)
         return reset_path
 
-    shutil.copy2(template_path, excel_path)
+    create_template_excel(excel_path)
     return excel_path
