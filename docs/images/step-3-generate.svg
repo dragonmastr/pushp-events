@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+  <rect width="900" height="500" fill="#f5f2ec" />
+  <rect x="130" y="80" width="640" height="340" rx="12" fill="#ffffff" stroke="#d0c7bb" />
+  <rect x="190" y="200" width="220" height="60" rx="10" fill="#cfe2ff" stroke="#7aa0d4" />
+  <text x="230" y="238" font-family="Arial" font-size="16" fill="#27496d">Generate PDF</text>
+  <rect x="180" y="190" width="240" height="80" rx="12" fill="none" stroke="#d35454" stroke-width="3" />
+  <rect x="470" y="200" width="220" height="60" rx="10" fill="#f6d3d3" stroke="#c98585" />
+  <text x="515" y="238" font-family="Arial" font-size="16" fill="#6d2b2b">Reset Excel</text>
+  <text x="450" y="430" font-family="Arial" font-size="18" fill="#4b3f39" text-anchor="middle">Step 3: Click Generate PDF to create the menu</text>
+</svg>

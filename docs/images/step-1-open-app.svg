@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+  <rect width="900" height="500" fill="#f5f2ec" />
+  <rect x="150" y="80" width="600" height="340" rx="12" fill="#ffffff" stroke="#d0c7bb" />
+  <rect x="150" y="80" width="600" height="48" rx="12" fill="#efe8dd" />
+  <text x="180" y="112" font-family="Arial" font-size="18" fill="#4b3f39">Pushp Events - Menu Generator</text>
+  <rect x="190" y="170" width="520" height="50" rx="8" fill="#f8f6f2" stroke="#d7cec2" />
+  <text x="200" y="201" font-family="Arial" font-size="16" fill="#6b5f57">Excel File Path</text>
+  <rect x="190" y="250" width="200" height="52" rx="8" fill="#cfe2ff" stroke="#7aa0d4" />
+  <text x="215" y="284" font-family="Arial" font-size="16" fill="#27496d">Generate PDF</text>
+  <rect x="420" y="250" width="200" height="52" rx="8" fill="#f6d3d3" stroke="#c98585" />
+  <text x="455" y="284" font-family="Arial" font-size="16" fill="#6d2b2b">Reset Excel</text>
+  <text x="450" y="430" font-family="Arial" font-size="18" fill="#4b3f39" text-anchor="middle">Step 1: Open the Menu Generator app</text>
+</svg>

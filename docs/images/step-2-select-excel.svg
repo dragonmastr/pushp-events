@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+  <rect width="900" height="500" fill="#f5f2ec" />
+  <rect x="130" y="70" width="640" height="360" rx="12" fill="#ffffff" stroke="#d0c7bb" />
+  <rect x="160" y="160" width="500" height="50" rx="8" fill="#f8f6f2" stroke="#d7cec2" />
+  <text x="175" y="192" font-family="Arial" font-size="16" fill="#6b5f57">data/menu.xlsx</text>
+  <rect x="670" y="160" width="120" height="50" rx="8" fill="#dff0d8" stroke="#7fb27f" />
+  <text x="700" y="192" font-family="Arial" font-size="16" fill="#2f5e2f">Browse</text>
+  <rect x="160" y="155" width="630" height="60" rx="10" fill="none" stroke="#d35454" stroke-width="3" />
+  <text x="450" y="430" font-family="Arial" font-size="18" fill="#4b3f39" text-anchor="middle">Step 2: Click Browse and choose your Excel file</text>
+</svg>
