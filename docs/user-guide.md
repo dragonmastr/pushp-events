@@ -1,56 +1,138 @@
 # Pushp Events Menu Generator - User Guide
 
-## 1. Open the app
-![Open the app](images/step-1-open-app.svg)
+## Overview
+This app generates a professional multi-day menu PDF from an Excel file. It produces **two PDFs** for every run:
+- **English** version
+- **Hindi** version
 
-## 2. Choose the Excel file
-![Select Excel](images/step-2-select-excel.svg)
+Output is organized automatically under:
+```
+Generated-menu/<excel_filename>/<event_name>_English.pdf
+Generated-menu/<excel_filename>/<event_name>_Hindi.pdf
+```
 
-## 3. Generate the PDF
-![Generate PDF](images/step-3-generate.svg)
+---
 
-## 4. Reset the Excel template (optional)
-![Reset Excel](images/step-4-reset.svg)
+## 1. Open the app and select the Excel file
+![Main window](images/ux-main-window.svg)
 
-## Excel file structure
-Your Excel file must contain 3 sheets:
+- Click the **`...`** button to select your Excel file.
+- The path appears in the text box.
+
+---
+
+## 2. Generate PDF (English + Hindi)
+Click **Generate PDF**. The app will:
+1. Read your Excel file
+2. Build the menu grouped by **date → meal → category**
+3. Produce **two PDFs**:
+   - `<event_name>_English.pdf`
+   - `<event_name>_Hindi.pdf`
+
+The PDFs are saved in:
+```
+Generated-menu/<excel_filename>/
+```
+
+---
+
+## 3. Reset Excel (create fresh template)
+When you click **Reset Excel**, you’ll be asked to confirm:
+
+![Reset confirmation](images/ux-reset-confirm.svg)
+
+If you choose **Yes**, you’ll be prompted to name the new file:
+
+![Save As dialog](images/ux-save-reset.svg)
+
+A **fresh Excel template** is created at the location you choose.
+
+---
+
+## Excel Structure
+Your Excel file must have 3 sheets:
 - `event_info`
 - `menu`
 - `meal_counts`
 
-### event_info
-Required keys (column A) and values (column B):
+### event_info (Required Fields)
+Column A = key, Column B = value
+
+English keys:
 - `event_name`
+- `client_name`
 - `venue`
 - `start_date`
 - `end_date`
-- `total_pax`
+- `total_pax` (auto-calculated)
 - `contact_phone` (or `caterer_phone`)
-- `planner_name` (optional)
-- `logo_path` (optional)
+- `caterer_name`
+- `planner_name`
+- `logo_path`
 
-### menu
+Hindi keys (optional for Hindi PDF):
+- `event_name_hi`
+- `client_name_hi`
+- `venue_hi`
+- `caterer_name_hi`
+- `planner_name_hi`
+
+If a Hindi key is missing, the Hindi PDF falls back to the English value.
+
+### menu (Menu Items)
 Columns:
 - `date`
 - `meal`
 - `category`
 - `item`
 
-### meal_counts
+**Best practice:** Keep menu sheet clean and let it auto-fill dates & meal order after you set `start_date` and `end_date`.
+
+### meal_counts (Auto Generated)
 Columns:
 - `date`
 - `meal`
 - `count`
 
-The `meal_counts` sheet auto-generates based on `start_date`, `end_date`, and `total_pax`.
-If you edit the counts manually, the PDF will show your updated values.
+Rules:
+- Auto-filled from `start_date` → `end_date`
+- Meal order always: **Breakfast → Lunch → Hi‑tea → Dinner**
+- `count` defaults from `total_pax`, but you can change it per meal
 
-## Reset behavior
-When you click Reset, the app creates a fresh template copy in the same folder as your Excel file:
-`<your_file>_reset.xlsx`
+---
 
-## Output
-The generated PDF is saved to:
-- `output/Pushp_Events_Menu.pdf`
+## Reset Logic (Important)
+When you create a fresh Excel file using Reset:
+- The **menu sheet is empty** except for formula-driven date & meal rows
+- The **meal_counts sheet auto-generates** based on start/end dates
+- `total_pax` is auto-calculated from `meal_counts`
 
-If you choose a custom Excel file, the PDF is created in the same folder as the Excel file.
+---
+
+## Menu Generation Logic
+- Each date is a separate page
+- Meals are always shown in this order:
+  **Breakfast → Lunch → Hi‑tea → Dinner**
+- Counts are pulled from `meal_counts`
+- Two PDFs are produced every time (English & Hindi)
+
+---
+
+## Output Files
+All generated PDFs are organized like this:
+```
+Generated-menu/
+  <excel_filename>/
+    <event_name>_English.pdf
+    <event_name>_Hindi.pdf
+```
+
+---
+
+## Troubleshooting
+- If meal_counts doesn’t fill, open the Excel file once so formulas recalculate, then save.
+- If Hindi fields show English values, add the `_hi` keys in `event_info`.
+
+---
+
+If you want further customization (logo, fonts, layout), just tell me.

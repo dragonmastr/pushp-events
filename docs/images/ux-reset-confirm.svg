@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <rect width="900" height="420" fill="#2a2a2a"/>
+  <rect x="160" y="110" width="580" height="200" rx="20" fill="#2f2f2f" stroke="#3f3f3f"/>
+  <rect x="400" y="130" width="90" height="90" rx="18" fill="#3a3a3a"/>
+  <rect x="430" y="150" width="30" height="50" rx="6" fill="#cfcfcf"/>
+  <text x="450" y="245" font-family="Arial" font-size="20" fill="#ffffff" text-anchor="middle">Create a fresh Excel file from</text>
+  <text x="450" y="270" font-family="Arial" font-size="20" fill="#ffffff" text-anchor="middle">the template?</text>
+
+  <rect x="240" y="300" width="160" height="44" rx="22" fill="#3d3d3d" stroke="#5a5a5a"/>
+  <text x="320" y="328" font-family="Arial" font-size="16" fill="#ffffff" text-anchor="middle">No</text>
+
+  <rect x="500" y="300" width="160" height="44" rx="22" fill="#2d63ff"/>
+  <text x="580" y="328" font-family="Arial" font-size="16" fill="#ffffff" text-anchor="middle">Yes</text>
+</svg>

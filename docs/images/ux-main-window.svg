@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+  <rect width="1200" height="420" fill="#1f1f1f"/>
+  <rect x="40" y="30" width="1120" height="360" rx="14" fill="#242424" stroke="#3a3a3a"/>
+  <text x="600" y="95" font-family="Arial" font-size="28" fill="#ffffff" text-anchor="middle" font-weight="700">Menu Generator</text>
+
+  <rect x="110" y="130" width="880" height="46" rx="6" fill="#151515" stroke="#4a4a4a"/>
+  <text x="125" y="160" font-family="Arial" font-size="16" fill="#d0d0d0">/Users/yourname/Documents/pushp-events/data/menu.xlsx</text>
+  <rect x="1010" y="130" width="50" height="46" rx="6" fill="#ffffff"/>
+  <text x="1035" y="160" font-family="Arial" font-size="22" fill="#111" text-anchor="middle">...</text>
+
+  <rect x="260" y="205" width="240" height="44" rx="8" fill="#ffffff"/>
+  <text x="380" y="234" font-family="Arial" font-size="16" fill="#111" text-anchor="middle">Generate PDF</text>
+
+  <rect x="540" y="205" width="240" height="44" rx="8" fill="#ffffff"/>
+  <text x="660" y="234" font-family="Arial" font-size="16" fill="#111" text-anchor="middle">Reset Excel</text>
+
+  <text x="600" y="290" font-family="Arial" font-size="14" fill="#9a9a9a" text-anchor="middle">Tip: Start and End dates in the Excel file auto-fill the meal counts sheet.</text>
+</svg>
