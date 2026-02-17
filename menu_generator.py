@@ -11,6 +11,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 from openpyxl import load_workbook, Workbook
+from openpyxl.styles import PatternFill, Font
 
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
@@ -265,10 +266,7 @@ def ensure_meal_counts_sheet(
         '=IFERROR(IF(ROW()-1 <= {total}, '
         'CHOOSE(MOD(ROW()-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
     ).format(total=formula_total)
-    formula_count = (
-        '=IFERROR(IF(ROW()-1 <= {total}, '
-        'INDEX(event_info!B:B, MATCH("total_pax", event_info!A:A, 0)), ""), "")'
-    ).format(total=formula_total)
+    # Count should be entered manually; do not reference total_pax to avoid circular formulas.
 
     # Pre-fill enough rows for long events
     for _ in range(2, 1502):
@@ -277,7 +275,7 @@ def ensure_meal_counts_sheet(
     for row_idx in range(2, 1502):
         ws[f"A{row_idx}"].value = formula_date
         ws[f"B{row_idx}"].value = formula_meal
-        ws[f"C{row_idx}"].value = formula_count
+        ws[f"C{row_idx}"].value = ""
 
     wb.save(xlsx_path)
     wb.close()
@@ -480,7 +478,7 @@ def generate_menu_pdf(
     if date_list:
         ensure_meal_counts_sheet(excel_path, date_list, default_pax)
 
-    meal_counts = read_meal_counts(excel_path, default_pax)
+    meal_counts = read_meal_counts(excel_path, None)
     date_counts = compute_date_counts(meal_counts)
 
     if labels is None:
@@ -496,14 +494,19 @@ def generate_menu_pdf(
         date_list, menu_tree, meal_counts, date_counts, meal_label_map, date_formatter
     )
 
-    logo_path = clean(event_info.get("logo_path")) or "assets/logo.png"
+    logo_path = clean(event_info.get("logo_path")) or "assets/pushp-event-logo.png"
     font_path = "assets/NotoSerifDevanagari-Regular.ttf"
 
     total_pax_value = clean(event_info.get("total_pax"))
     if not total_pax_value:
-        numeric_counts = [v for v in date_counts.values() if v is not None]
-        if numeric_counts:
-            total_pax_value = str(int(max(numeric_counts)))
+        all_counts = []
+        for meals in meal_counts.values():
+            for v in meals.values():
+                pv = parse_count(v)
+                if pv is not None:
+                    all_counts.append(pv)
+        if all_counts:
+            total_pax_value = str(int(max(all_counts)))
 
     def localized_value(key: str) -> str:
         if lang == "hi":
@@ -601,10 +604,18 @@ def create_template_excel(path: Path) -> None:
     path = Path(path)
     wb = Workbook()
 
+    header_fill = "D9D2C6"
+    header_font = "000000"
+    date_format = "DD/MM/YYYY"
+
     # event_info
     ws_event = wb.active
     ws_event.title = "event_info"
     ws_event.append(["key", "value"])
+    ws_event["A1"].fill = PatternFill("solid", fgColor=header_fill)
+    ws_event["B1"].fill = PatternFill("solid", fgColor=header_fill)
+    ws_event["A1"].font = Font(bold=True, color=header_font)
+    ws_event["B1"].font = Font(bold=True, color=header_font)
     keys = [
         "event_name",
         "event_name_hi",
@@ -630,9 +641,17 @@ def create_template_excel(path: Path) -> None:
         else:
             ws_event.append([key, ""])
 
+    # format start/end date cells in event_info (column B)
+    for row_idx, key in enumerate(keys, start=2):
+        if key in ("start_date", "end_date"):
+            ws_event[f"B{row_idx}"].number_format = date_format
+
     # menu sheet
     ws_menu = wb.create_sheet("menu")
     ws_menu.append(["date", "meal", "category", "item"])
+    for col in ("A1", "B1", "C1", "D1"):
+        ws_menu[col].fill = PatternFill("solid", fgColor=header_fill)
+        ws_menu[col].font = Font(bold=True, color=header_font)
 
     formula_total = (
         '(INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0)) - '
@@ -650,19 +669,21 @@ def create_template_excel(path: Path) -> None:
     for row_idx in range(2, 1502):
         ws_menu[f"A{row_idx}"].value = formula_date
         ws_menu[f"B{row_idx}"].value = formula_meal
+        ws_menu[f"A{row_idx}"].number_format = date_format
 
     # meal_counts sheet
     ws_counts = wb.create_sheet("meal_counts")
     ws_counts.append(["date", "meal", "count"])
-    formula_count = (
-        '=IFERROR(IF(ROW()-1 <= {total}, '
-        'INDEX(event_info!B:B, MATCH("total_pax", event_info!A:A, 0)), ""), "")'
-    ).format(total=formula_total)
+    for col in ("A1", "B1", "C1"):
+        ws_counts[col].fill = PatternFill("solid", fgColor=header_fill)
+        ws_counts[col].font = Font(bold=True, color=header_font)
+    # Count is manual to avoid circular formulas.
 
     for row_idx in range(2, 1502):
         ws_counts[f"A{row_idx}"].value = formula_date
         ws_counts[f"B{row_idx}"].value = formula_meal
-        ws_counts[f"C{row_idx}"].value = formula_count
+        ws_counts[f"C{row_idx}"].value = ""
+        ws_counts[f"A{row_idx}"].number_format = date_format
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)

@@ -44,3 +44,11 @@ You must build on each target OS.
 ## Notes
 - WeasyPrint depends on system libraries. If the build fails, install the platform libraries needed by WeasyPrint.
 - Always build on the same OS you are targeting.
+
+## Runtime Output Folder
+Generated PDFs are saved at:
+```
+Generated-menu/<excel_filename>/<event_name>_English.pdf
+Generated-menu/<excel_filename>/<event_name>_Hindi.pdf
+```
+This folder is created next to the app when it runs.
