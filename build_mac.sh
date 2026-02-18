@@ -13,6 +13,7 @@ pip install pyinstaller
 echo "Building macOS app..."
 pyinstaller --noconfirm --clean --windowed --onefile \
   --name "Pushp-Menu-Generator" \
+  --hidden-import menu_generator \
   --add-data "templates:templates" \
   --add-data "assets:assets" \
   --add-data "static:static" \
