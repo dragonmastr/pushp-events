@@ -506,7 +506,7 @@ def generate_menu_pdf(
                 if pv is not None:
                     all_counts.append(pv)
         if all_counts:
-            total_pax_value = str(int(max(all_counts)))
+            total_pax_value = str(int(sum(all_counts)))
 
     def localized_value(key: str) -> str:
         if lang == "hi":
@@ -637,7 +637,9 @@ def create_template_excel(path: Path) -> None:
     ]
     for key in keys:
         if key == "total_pax":
-            ws_event.append([key, '=IFERROR(MAX(meal_counts!C:C), "")'])
+            ws_event.append(
+                [key, '=IFERROR(IF(SUM(meal_counts!C:C)=0, "", SUM(meal_counts!C:C)), "")']
+            )
         else:
             ws_event.append([key, ""])
 
