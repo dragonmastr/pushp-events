@@ -1,6 +1,18 @@
+import os
+import sys
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox
+
+
+def configure_gtk_runtime() -> None:
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    gtk_bin = base_dir / "gtk" / "bin"
+    if gtk_bin.exists():
+        os.environ["PATH"] = str(gtk_bin) + os.pathsep + os.environ.get("PATH", "")
+
+
+configure_gtk_runtime()
 
 from menu_generator import generate_menu_pdfs, reset_excel
 

@@ -569,7 +569,7 @@ def generate_menu_pdfs(excel_path: Path) -> Tuple[Path, Path]:
     event_name = clean(event_info.get("event_name")) or "Menu"
     event_name_hi = clean(event_info.get("event_name_hi")) or event_name
 
-    output_dir = BASE_DIR / "Generated-menu" / excel_path.stem
+    output_dir = Path.home() / "Documents" / "Generated-menu" / excel_path.stem
     output_dir.mkdir(parents=True, exist_ok=True)
 
     base_en = safe_filename(event_name)
