@@ -49,18 +49,17 @@ def run_generation(path_var: tk.StringVar) -> None:
 
 def run_reset(path_var: tk.StringVar) -> None:
     excel_path = Path(path_var.get())
-    if not excel_path.exists():
-        messagebox.showerror("Missing File", "Please select a valid Excel file.")
-        return
 
     if not messagebox.askyesno("Reset Excel", "Create a fresh Excel file from the template?"):
         return
+    initial_dir = excel_path.parent if excel_path.exists() else (Path.home() / "Documents")
+    initial_name = f"{excel_path.stem}.xlsx" if excel_path.exists() else "menu.xlsx"
     save_path = filedialog.asksaveasfilename(
         title="Save Reset Excel As",
         defaultextension=".xlsx",
         filetypes=[("Excel files", "*.xlsx")],
-        initialdir=str(excel_path.parent),
-        initialfile=f"{excel_path.stem}.xlsx",
+        initialdir=str(initial_dir),
+        initialfile=initial_name,
     )
     if not save_path:
         return
