@@ -563,13 +563,22 @@ def safe_filename(name: str) -> str:
     return cleaned or "Menu"
 
 
-def generate_menu_pdfs(excel_path: Path) -> Tuple[Path, Path]:
+def generate_menu_pdfs(
+    excel_path: Path, output_root: Optional[Path] = None
+) -> Tuple[Path, Path]:
     excel_path = Path(excel_path)
     event_info = read_event_info(excel_path)
     event_name = clean(event_info.get("event_name")) or "Menu"
     event_name_hi = clean(event_info.get("event_name_hi")) or event_name
 
-    output_dir = Path.home() / "Documents" / "Generated-menu" / excel_path.stem
+    if output_root is None:
+        output_root = Path.home() / "Documents"
+    output_root = Path(output_root)
+    menu_root = output_root
+    if menu_root.name.lower() != "generated-menu":
+        menu_root = menu_root / "Generated-menu"
+
+    output_dir = menu_root / excel_path.stem
     output_dir.mkdir(parents=True, exist_ok=True)
 
     base_en = safe_filename(event_name)

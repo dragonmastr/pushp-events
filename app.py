@@ -28,8 +28,15 @@ def run_generation(path_var: tk.StringVar) -> None:
         messagebox.showerror("Missing File", "Please select a valid Excel file.")
         return
 
+    output_dir = filedialog.askdirectory(
+        title="Select folder to save Generated-menu",
+        initialdir=str(Path.home() / "Documents"),
+    )
+    if not output_dir:
+        return
+
     try:
-        output_en, output_hi = generate_menu_pdfs(excel_path)
+        output_en, output_hi = generate_menu_pdfs(excel_path, Path(output_dir))
     except Exception as exc:  # pylint: disable=broad-except
         messagebox.showerror("Generation Failed", f"Error: {exc}")
         return

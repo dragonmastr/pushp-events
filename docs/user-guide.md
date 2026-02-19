@@ -5,11 +5,7 @@ This app generates a professional multi-day menu PDF from an Excel file. It prod
 - **English** version
 - **Hindi** version
 
-Output is organized automatically under:
-```
-Generated-menu/<excel_filename>/<event_name>_English.pdf
-Generated-menu/<excel_filename>/<event_name>_Hindi.pdf
-```
+When you generate, you choose where the **Generated-menu** folder should be saved.
 
 ---
 
@@ -22,7 +18,10 @@ Generated-menu/<excel_filename>/<event_name>_Hindi.pdf
 ---
 
 ## 2. Generate PDF (English + Hindi)
-Click **Generate PDF**. The app will:
+Click **Generate PDF**. The app will first ask you to **pick a folder** where the
+**Generated-menu** directory should be created.
+
+Then it will:
 1. Read your Excel file
 2. Build the menu grouped by **date → meal → category**
 3. Produce **two PDFs**:
@@ -31,7 +30,7 @@ Click **Generate PDF**. The app will:
 
 The PDFs are saved in:
 ```
-Generated-menu/<excel_filename>/
+<your-selected-folder>/Generated-menu/<excel_filename>/
 ```
 
 ---
@@ -97,7 +96,7 @@ Columns:
 Rules:
 - Auto-filled from `start_date` → `end_date`
 - Meal order always: **Breakfast → Lunch → Hi‑tea → Dinner**
-- `count` defaults from `total_pax`, but you can change it per meal
+- `count` is manual (enter per meal)
 
 ---
 
@@ -105,7 +104,7 @@ Rules:
 When you create a fresh Excel file using Reset:
 - The **menu sheet is empty** except for formula-driven date & meal rows
 - The **meal_counts sheet auto-generates** based on start/end dates
-- `total_pax` is auto-calculated from `meal_counts`
+- `total_pax` is auto-calculated as the **sum** of all `meal_counts`
 
 ---
 
@@ -121,10 +120,11 @@ When you create a fresh Excel file using Reset:
 ## Output Files
 All generated PDFs are organized like this:
 ```
-Generated-menu/
-  <excel_filename>/
-    <event_name>_English.pdf
-    <event_name>_Hindi.pdf
+<your-selected-folder>/
+  Generated-menu/
+    <excel_filename>/
+      <event_name>_English.pdf
+      <event_name>_Hindi.pdf
 ```
 
 ---
