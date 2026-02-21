@@ -14,8 +14,6 @@ def configure_gtk_runtime() -> None:
 
 configure_gtk_runtime()
 
-from menu_generator import generate_menu_pdfs, reset_excel
-
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_EXCEL = BASE_DIR / "data" / "menu.xlsx"
 DEFAULT_OUTPUT = None
@@ -36,6 +34,8 @@ def run_generation(path_var: tk.StringVar) -> None:
         return
 
     try:
+        from menu_generator import generate_menu_pdfs
+
         output_en, output_hi = generate_menu_pdfs(excel_path, Path(output_dir))
     except Exception as exc:  # pylint: disable=broad-except
         messagebox.showerror("Generation Failed", f"Error: {exc}")
@@ -65,6 +65,8 @@ def run_reset(path_var: tk.StringVar) -> None:
         return
 
     try:
+        from menu_generator import reset_excel
+
         reset_path = reset_excel(Path(save_path), TEMPLATE_EXCEL, create_new=False)
     except Exception as exc:  # pylint: disable=broad-except
         messagebox.showerror("Reset Failed", f"Error: {exc}")

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gmail Resume Sender</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mailer.css') }}">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Batch Gmail Sender</p>
+        <h1>Personalized resume outreach, controlled and logged.</h1>
+        <p class="lead">Upload your Excel list and resume, add your cover letter and signature, then send in safe batches with clear status tracking.</p>
+        <div class="chip-row">
+          <span class="chip">Batch size 50</span>
+          <span class="chip">20 emails / minute</span>
+          <span class="chip">5 min pause</span>
+          <span class="chip">Daily cap 1500</span>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="panel-header">
+          <h2>Send setup</h2>
+          <p>Fill the details below. Placeholders: <code>{name}</code> <code>{title}</code> <code>{company}</code> <code>{email}</code></p>
+        </div>
+        <form id="sendForm" class="form" enctype="multipart/form-data">
+          <div class="field">
+            <label for="from_email">Gmail address</label>
+            <input type="email" id="from_email" name="from_email" placeholder="you@gmail.com" required>
+            <small>Use a Gmail App Password if 2-step verification is enabled.</small>
+          </div>
+          <div class="field">
+            <label for="app_password">Gmail App Password</label>
+            <input type="password" id="app_password" name="app_password" placeholder="xxxx xxxx xxxx xxxx" required>
+          </div>
+          <div class="field">
+            <label for="from_name">Sender name (optional)</label>
+            <input type="text" id="from_name" name="from_name" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label for="reply_to">Reply-to email (optional)</label>
+            <input type="email" id="reply_to" name="reply_to" placeholder="same as Gmail">
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field">
+            <label for="subject">Subject template</label>
+            <input type="text" id="subject" name="subject" value="Regarding Job opportunity in you estimed {company}" required>
+          </div>
+
+          <div class="field">
+            <label for="cover_letter">Cover letter</label>
+            <textarea id="cover_letter" name="cover_letter" rows="8" placeholder="Write your cover letter here..." required></textarea>
+          </div>
+
+          <div class="field">
+            <label for="signature">Your details (signature)</label>
+            <textarea id="signature" name="signature" rows="4" placeholder="Name\nPhone\nEmail\nLinkedIn"></textarea>
+          </div>
+
+          <div class="field inline">
+            <input type="checkbox" id="use_title" name="use_title" checked>
+            <label for="use_title">Use Title in greeting if present</label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="excel_file">Excel file</label>
+              <input type="file" id="excel_file" name="excel_file" accept=".xlsx" required>
+              <small>Required headers: Name, Email, Title, Company</small>
+            </div>
+            <div class="field">
+              <label for="resume_file">Resume file</label>
+              <input type="file" id="resume_file" name="resume_file" accept=".pdf,.doc,.docx" required>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="batch_size">Batch size</label>
+              <input type="number" id="batch_size" name="batch_size" value="50" min="1" max="200" required>
+            </div>
+            <div class="field">
+              <label for="batch_delay">Delay between batches (minutes)</label>
+              <input type="number" id="batch_delay" name="batch_delay" value="5" min="0" step="0.5" required>
+            </div>
+            <div class="field">
+              <label for="emails_per_min">Emails per minute (max)</label>
+              <input type="number" id="emails_per_min" name="emails_per_min" value="20" min="1" max="100" required>
+            </div>
+            <div class="field">
+              <label for="daily_cap">Daily cap</label>
+              <input type="number" id="daily_cap" name="daily_cap" value="1500" min="1" max="5000" required>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" type="submit" id="startBtn">Start sending</button>
+            <button class="btn ghost" type="button" id="stopBtn">Stop</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="status-card">
+      <div>
+        <h3>Status</h3>
+        <p id="statusText">Idle</p>
+      </div>
+      <div class="stats">
+        <div>
+          <span class="label">Total</span>
+          <span id="totalCount">0</span>
+        </div>
+        <div>
+          <span class="label">Sent</span>
+          <span id="sentCount">0</span>
+        </div>
+        <div>
+          <span class="label">Failed</span>
+          <span id="failedCount">0</span>
+        </div>
+        <div>
+          <span class="label">Skipped</span>
+          <span id="skippedCount">0</span>
+        </div>
+      </div>
+      <div class="status-meta">
+        <p><strong>Current:</strong> <span id="currentEmail">-</span></p>
+        <p><strong>Started:</strong> <span id="startedAt">-</span></p>
+        <p><strong>Finished:</strong> <span id="finishedAt">-</span></p>
+      </div>
+      <div class="log-row">
+        <a id="logLink" href="#" class="btn ghost" hidden>Download log</a>
+      </div>
+    </section>
+
+    <section class="notes">
+      <h3>Notes</h3>
+      <ul>
+        <li>Gmail may throttle or block if limits are exceeded. Keep to the cap and rate limits above.</li>
+        <li>Duplicates and invalid emails are skipped automatically.</li>
+        <li>Always test with a small file before the full 1800 list.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='mailer.js') }}"></script>
+</body>
+</html>

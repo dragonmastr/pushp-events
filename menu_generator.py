@@ -58,7 +58,7 @@ LABELS_EN = {
     "end_date": "End Date",
     "caterer": "Caterer",
     "phone": "Phone",
-    "dinner_planner": "Dinner Planner",
+    "dinner_planner": "Planner",
     "count": "Count",
     "generated_on": "Generated on",
     "brand": "Pushp Events",
@@ -72,7 +72,7 @@ LABELS_HI = {
     "end_date": "समाप्ति तिथि",
     "caterer": "कैटरर",
     "phone": "फोन",
-    "dinner_planner": "डिनर प्लानर",
+    "dinner_planner": "प्लानर",
     "count": "गणना",
     "generated_on": "तैयार",
     "brand": "Pushp Events",
@@ -252,6 +252,13 @@ def ensure_meal_counts_sheet(
 
     ws = wb.create_sheet("meal_counts")
     ws.append(["date", "meal", "count"])
+    header_fill = PatternFill("solid", fgColor="D9D2C6")
+    header_font = Font(bold=True, color="000000")
+    for col in ("A1", "B1", "C1"):
+        ws[col].fill = header_fill
+        ws[col].font = header_font
+
+    date_format = "DD/MM/YYYY"
 
     # Create formula-driven rows so Excel can auto-generate dates and meals
     formula_total = (
@@ -276,6 +283,7 @@ def ensure_meal_counts_sheet(
         ws[f"A{row_idx}"].value = formula_date
         ws[f"B{row_idx}"].value = formula_meal
         ws[f"C{row_idx}"].value = ""
+        ws[f"A{row_idx}"].number_format = date_format
 
     wb.save(xlsx_path)
     wb.close()
@@ -656,6 +664,30 @@ def create_template_excel(path: Path) -> None:
     for row_idx, key in enumerate(keys, start=2):
         if key in ("start_date", "end_date"):
             ws_event[f"B{row_idx}"].number_format = date_format
+
+    # Add data validation to enforce DD/MM/YYYY for start_date and end_date
+    try:
+        from openpyxl.worksheet.datavalidation import DataValidation
+
+        start_row = keys.index("start_date") + 2
+        end_row = keys.index("end_date") + 2
+        dv = DataValidation(
+            type="date",
+            operator="between",
+            formula1="DATE(2000,1,1)",
+            formula2="DATE(2100,12,31)",
+            allow_blank=True,
+        )
+        dv.error = "Please enter date as DD/MM/YYYY."
+        dv.errorTitle = "Invalid date format"
+        dv.prompt = "Enter date in DD/MM/YYYY format."
+        dv.promptTitle = "Date format"
+        dv.showErrorMessage = True
+        ws_event.add_data_validation(dv)
+        dv.add(ws_event[f"B{start_row}"])
+        dv.add(ws_event[f"B{end_row}"])
+    except Exception:
+        pass
 
     # menu sheet
     ws_menu = wb.create_sheet("menu")
