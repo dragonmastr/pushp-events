@@ -680,19 +680,23 @@ def create_template_excel(path: Path) -> None:
 
         start_row = keys.index("start_date") + 2
         end_row = keys.index("end_date") + 2
-        dv = DataValidation(
-            type="custom",
-            formula1='=OR(B2="",AND(LEN(B2)=10, MID(B2,3,1)="/", MID(B2,6,1)="/"))',
-            allow_blank=True,
-        )
-        dv.error = "Please enter date as DD/MM/YYYY (e.g., 01/03/2026)."
-        dv.errorTitle = "Invalid date format"
-        dv.prompt = "Enter date in DD/MM/YYYY format."
-        dv.promptTitle = "Date format"
-        dv.showErrorMessage = True
-        ws_event.add_data_validation(dv)
-        dv.add(ws_event[f"B{start_row}"])
-        dv.add(ws_event[f"B{end_row}"])
+        for row in (start_row, end_row):
+            cell_ref = f"B{row}"
+            dv = DataValidation(
+                type="custom",
+                formula1=(
+                    f'=OR({cell_ref}="",ISNUMBER({cell_ref}),'
+                    f'AND(LEN({cell_ref})=10, MID({cell_ref},3,1)="/", MID({cell_ref},6,1)="/"))'
+                ),
+                allow_blank=True,
+            )
+            dv.error = "Please enter date as DD/MM/YYYY (e.g., 01/03/2026)."
+            dv.errorTitle = "Invalid date format"
+            dv.prompt = "Enter date in DD/MM/YYYY format."
+            dv.promptTitle = "Date format"
+            dv.showErrorMessage = True
+            ws_event.add_data_validation(dv)
+            dv.add(ws_event[cell_ref])
     except Exception:
         pass
 
