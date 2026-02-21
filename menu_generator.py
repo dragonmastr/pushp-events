@@ -159,7 +159,7 @@ def parse_date(value: object) -> Optional[date]:
     if isinstance(value, date):
         return value
     try:
-        parsed = pd.to_datetime(value, errors="coerce")
+        parsed = pd.to_datetime(value, errors="coerce", dayfirst=True)
         if pd.isna(parsed):
             return None
         return parsed.date()
@@ -261,14 +261,23 @@ def ensure_meal_counts_sheet(
     date_format = "DD/MM/YYYY"
 
     # Create formula-driven rows so Excel can auto-generate dates and meals
-    formula_total = (
-        '(INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0)) - '
-        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + 1) * 4'
+    start_ref = 'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0))'
+    end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
+    start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
+    end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
+    start_expr = (
+        f'DATE(VALUE(RIGHT({start_text},4)), '
+        f'VALUE(MID({start_text},4,2)), VALUE(LEFT({start_text},2)))'
     )
+    end_expr = (
+        f'DATE(VALUE(RIGHT({end_text},4)), '
+        f'VALUE(MID({end_text},4,2)), VALUE(LEFT({end_text},2)))'
+    )
+    formula_total = f'({end_expr} - {start_expr} + 1) * 4'
     formula_date = (
         '=IFERROR(IF(ROW()-1 <= {total}, '
-        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + INT((ROW()-2)/4), ""), "")'
-    ).format(total=formula_total)
+        '{start} + INT((ROW()-2)/4), ""), "")'
+    ).format(total=formula_total, start=start_expr)
     formula_meal = (
         '=IFERROR(IF(ROW()-1 <= {total}, '
         'CHOOSE(MOD(ROW()-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
@@ -663,7 +672,7 @@ def create_template_excel(path: Path) -> None:
     # format start/end date cells in event_info (column B)
     for row_idx, key in enumerate(keys, start=2):
         if key in ("start_date", "end_date"):
-            ws_event[f"B{row_idx}"].number_format = date_format
+            ws_event[f"B{row_idx}"].number_format = "@"
 
     # Add data validation to enforce DD/MM/YYYY for start_date and end_date
     try:
@@ -672,13 +681,11 @@ def create_template_excel(path: Path) -> None:
         start_row = keys.index("start_date") + 2
         end_row = keys.index("end_date") + 2
         dv = DataValidation(
-            type="date",
-            operator="between",
-            formula1="DATE(2000,1,1)",
-            formula2="DATE(2100,12,31)",
+            type="custom",
+            formula1='=OR(B2="",AND(LEN(B2)=10, MID(B2,3,1)="/", MID(B2,6,1)="/"))',
             allow_blank=True,
         )
-        dv.error = "Please enter date as DD/MM/YYYY."
+        dv.error = "Please enter date as DD/MM/YYYY (e.g., 01/03/2026)."
         dv.errorTitle = "Invalid date format"
         dv.prompt = "Enter date in DD/MM/YYYY format."
         dv.promptTitle = "Date format"
