@@ -6,10 +6,18 @@ from tkinter import filedialog, messagebox
 
 
 def configure_gtk_runtime() -> None:
+    # 1) If GTK is bundled (older build mode), prefer bundled DLLs.
     base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     gtk_bin = base_dir / "gtk" / "bin"
     if gtk_bin.exists():
         os.environ["PATH"] = str(gtk_bin) + os.pathsep + os.environ.get("PATH", "")
+        return
+
+    # 2) If GTK is installed system-wide (new build mode), add common install location.
+    if os.name == "nt":
+        system_gtk_bin = Path("C:/Program Files/GTK3-Runtime Win64/bin")
+        if system_gtk_bin.exists():
+            os.environ["PATH"] = str(system_gtk_bin) + os.pathsep + os.environ.get("PATH", "")
 
 
 configure_gtk_runtime()

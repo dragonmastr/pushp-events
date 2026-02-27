@@ -12,7 +12,6 @@ pip install pyinstaller
 pip install pillow
 
 echo Building Windows executable...
-set "GTK_DIR=C:\Program Files\GTK3-Runtime Win64"
 set "ICON_PNG=assets\logo.png"
 if not exist "%ICON_PNG%" set "ICON_PNG=assets\pushp-event-logo.png"
 set "ICON_ICO=assets\app-icon.ico"
@@ -29,31 +28,18 @@ if not exist "%ICON_PNG%" (
   echo Icon PNG not found. Continuing without custom icon.
 )
 
-if exist "%GTK_DIR%\bin" (
-  echo Including GTK runtime from %GTK_DIR%
-  pyinstaller --noconfirm --clean --windowed --onefile ^
-    --name "Pushp-Menu-Generator" ^
-    --hidden-import menu_generator ^
-    --hidden-import weasyprint ^
-    %ICON_ARG% ^
-    --add-data "%GTK_DIR%;gtk" ^
-    --add-data "templates;templates" ^
-    --add-data "assets;assets" ^
-    --add-data "static;static" ^
-    app.py
-) else (
-  echo GTK runtime not found at %GTK_DIR%. Building without bundled GTK.
-  pyinstaller --noconfirm --clean --windowed --onefile ^
-    --name "Pushp-Menu-Generator" ^
-    --hidden-import menu_generator ^
-    --hidden-import weasyprint ^
-    %ICON_ARG% ^
-    --add-data "templates;templates" ^
-    --add-data "assets;assets" ^
-    --add-data "static;static" ^
-    app.py
-)
+echo Building without bundled GTK. Install GTK runtime on target system.
+pyinstaller --noconfirm --clean --windowed --onefile ^
+  --name "Pushp-Menu-Generator" ^
+  --hidden-import menu_generator ^
+  --hidden-import weasyprint ^
+  %ICON_ARG% ^
+  --add-data "templates;templates" ^
+  --add-data "assets;assets" ^
+  --add-data "static;static" ^
+  app.py
 
 echo.
 echo Build complete. Output: dist\Pushp-Menu-Generator.exe
+echo Note: Ensure GTK3 runtime is installed on machines running this EXE.
 pause

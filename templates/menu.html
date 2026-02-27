@@ -108,6 +108,10 @@
       page-break-after: auto;
     }
 
+    .day:last-of-type {
+      page-break-after: auto;
+    }
+
     .day-date {
       font-size: 22px;
       font-weight: 700;
@@ -183,6 +187,31 @@
     li {
       margin-bottom: 4px;
       font-size: 13px;
+    }
+
+    .notes-page {
+      page-break-before: always;
+      padding-top: 8mm;
+    }
+
+    .notes-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #3a2f2f;
+      border-bottom: 1px solid #cbbfb3;
+      padding-bottom: 8px;
+    }
+
+    .notes-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .notes-list li {
+      font-size: 15px;
+      margin-bottom: 8px;
+      line-height: 1.4;
     }
 
     #footer {
@@ -275,6 +304,17 @@
     </div>
   </div>
   {% endfor %}
+
+  {% if notes_items %}
+  <div class="notes-page">
+    <div class="notes-title">{{ notes_title }}</div>
+    <ul class="notes-list">
+      {% for item in notes_items %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
   <div id="footer">
     {{ labels.generated_on }} {{ generated_on }} · {{ labels.brand }}

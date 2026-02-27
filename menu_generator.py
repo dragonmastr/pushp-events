@@ -133,6 +133,10 @@ EVENT_KEY_ALIASES = {
     "planner_name": ["planner name", "event planner", "dinner planner name", "planner"],
     "planner_name_hi": ["planner name hi", "planner_name_hi", "planner name hindi"],
     "caterer_name_hi": ["caterer name hi", "caterer_name_hi", "caterer name hindi"],
+    "notes_title": ["notes title", "note title", "extras title", "notes heading", "extras heading"],
+    "notes_title_hi": ["notes title hi", "notes_title_hi", "extras title hi", "notes heading hindi"],
+    "notes_text": ["notes", "note", "extras", "notes text", "notes_text", "extras text"],
+    "notes_text_hi": ["notes_text_hi", "notes text hi", "extras text hi", "notes hindi", "extras hindi"],
 }
 
 
@@ -195,6 +199,28 @@ def normalize_meal(meal: str) -> str:
     if raw in {"dinner"}:
         return "Dinner"
     return clean(meal)
+
+
+def parse_note_lines(raw_text: object) -> List[str]:
+    text = clean(raw_text)
+    if not text:
+        return []
+
+    lines = []
+    for line in text.splitlines():
+        item = line.strip()
+        if not item:
+            continue
+        # Normalize common bullet prefixes from manual entry.
+        item = item.lstrip("-*•").strip()
+        if not item:
+            continue
+        for part in item.split(";"):
+            chunk = part.strip()
+            if chunk:
+                lines.append(chunk)
+
+    return lines
 
 
 # ---------------- EXCEL IO ----------------
@@ -265,14 +291,22 @@ def ensure_meal_counts_sheet(
     end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
     start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
     end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
-    start_expr = (
+    start_sep1 = f'FIND("/",{start_text})'
+    start_sep2 = f'FIND("/",{start_text},{start_sep1}+1)'
+    end_sep1 = f'FIND("/",{end_text})'
+    end_sep2 = f'FIND("/",{end_text},{end_sep1}+1)'
+    start_ddmmyyyy = (
         f'DATE(VALUE(RIGHT({start_text},4)), '
-        f'VALUE(MID({start_text},4,2)), VALUE(LEFT({start_text},2)))'
+        f'VALUE(MID({start_text},{start_sep1}+1,{start_sep2}-{start_sep1}-1)), '
+        f'VALUE(LEFT({start_text},{start_sep1}-1)))'
     )
-    end_expr = (
+    end_ddmmyyyy = (
         f'DATE(VALUE(RIGHT({end_text},4)), '
-        f'VALUE(MID({end_text},4,2)), VALUE(LEFT({end_text},2)))'
+        f'VALUE(MID({end_text},{end_sep1}+1,{end_sep2}-{end_sep1}-1)), '
+        f'VALUE(LEFT({end_text},{end_sep1}-1)))'
     )
+    start_expr = f'IF(ISNUMBER({start_ref}),{start_ref},IFERROR({start_ddmmyyyy},DATEVALUE({start_text})))'
+    end_expr = f'IF(ISNUMBER({end_ref}),{end_ref},IFERROR({end_ddmmyyyy},DATEVALUE({end_text})))'
     formula_total = f'({end_expr} - {start_expr} + 1) * 4'
     formula_date = (
         '=IFERROR(IF(ROW()-1 <= {total}, '
@@ -551,6 +585,12 @@ def generate_menu_pdf(
         "logo_path": logo_path,
     }
 
+    notes_title = localized_value("notes_title")
+    notes_text = localized_value("notes_text")
+    if not notes_title:
+        notes_title = "नोट्स" if lang == "hi" else "Notes"
+    notes_items = parse_note_lines(notes_text)
+
     env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")))
     template = env.get_template("menu.html")
 
@@ -562,6 +602,8 @@ def generate_menu_pdf(
         generated_on=format_date_localized(datetime.now().date(), lang),
         labels=labels,
         category_labels=category_labels,
+        notes_title=notes_title,
+        notes_items=notes_items,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -660,12 +702,20 @@ def create_template_excel(path: Path) -> None:
         "caterer_name",
         "caterer_name_hi",
         "logo_path",
+        "notes_title",
+        "notes_title_hi",
+        "notes_text",
+        "notes_text_hi",
     ]
     for key in keys:
         if key == "total_pax":
             ws_event.append(
                 [key, '=IFERROR(IF(SUM(meal_counts!C:C)=0, "", SUM(meal_counts!C:C)), "")']
             )
+        elif key == "notes_title":
+            ws_event.append([key, "Notes"])
+        elif key == "notes_title_hi":
+            ws_event.append([key, "नोट्स"])
         else:
             ws_event.append([key, ""])
 
@@ -686,7 +736,9 @@ def create_template_excel(path: Path) -> None:
                 type="custom",
                 formula1=(
                     f'=OR({cell_ref}="",ISNUMBER({cell_ref}),'
-                    f'AND(LEN({cell_ref})=10, MID({cell_ref},3,1)="/", MID({cell_ref},6,1)="/"))'
+                    f'AND(LEN({cell_ref})>=8,LEN({cell_ref})<=10,'
+                    f'ISNUMBER(FIND("/",{cell_ref})),'
+                    f'ISNUMBER(FIND("/",{cell_ref},FIND("/",{cell_ref})+1))))'
                 ),
                 allow_blank=True,
             )
@@ -707,22 +759,40 @@ def create_template_excel(path: Path) -> None:
         ws_menu[col].fill = PatternFill("solid", fgColor=header_fill)
         ws_menu[col].font = Font(bold=True, color=header_font)
 
-    formula_total = (
-        '(INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0)) - '
-        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + 1) * 4'
+    start_ref = 'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0))'
+    end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
+    start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
+    end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
+    start_sep1 = f'FIND("/",{start_text})'
+    start_sep2 = f'FIND("/",{start_text},{start_sep1}+1)'
+    end_sep1 = f'FIND("/",{end_text})'
+    end_sep2 = f'FIND("/",{end_text},{end_sep1}+1)'
+    start_ddmmyyyy = (
+        f'DATE(VALUE(RIGHT({start_text},4)), '
+        f'VALUE(MID({start_text},{start_sep1}+1,{start_sep2}-{start_sep1}-1)), '
+        f'VALUE(LEFT({start_text},{start_sep1}-1)))'
     )
-    formula_date = (
-        '=IFERROR(IF(ROW()-1 <= {total}, '
-        'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0)) + INT((ROW()-2)/4), ""), "")'
-    ).format(total=formula_total)
-    formula_meal = (
-        '=IFERROR(IF(ROW()-1 <= {total}, '
-        'CHOOSE(MOD(ROW()-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
-    ).format(total=formula_total)
+    end_ddmmyyyy = (
+        f'DATE(VALUE(RIGHT({end_text},4)), '
+        f'VALUE(MID({end_text},{end_sep1}+1,{end_sep2}-{end_sep1}-1)), '
+        f'VALUE(LEFT({end_text},{end_sep1}-1)))'
+    )
+    start_expr = f'IF(ISNUMBER({start_ref}),{start_ref},IFERROR({start_ddmmyyyy},DATEVALUE({start_text})))'
+    end_expr = f'IF(ISNUMBER({end_ref}),{end_ref},IFERROR({end_ddmmyyyy},DATEVALUE({end_text})))'
+    formula_total = f'({end_expr} - {start_expr} + 1) * 4'
 
     for row_idx in range(2, 1502):
-        ws_menu[f"A{row_idx}"].value = formula_date
-        ws_menu[f"B{row_idx}"].value = formula_meal
+        # Use fixed row index in formula so copied cells keep the same date/meal value.
+        formula_date_row = (
+            '=IFERROR(IF({row}-1 <= {total}, '
+            '{start} + INT(({row}-2)/4), ""), "")'
+        ).format(row=row_idx, total=formula_total, start=start_expr)
+        formula_meal_row = (
+            '=IFERROR(IF({row}-1 <= {total}, '
+            'CHOOSE(MOD({row}-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
+        ).format(row=row_idx, total=formula_total)
+        ws_menu[f"A{row_idx}"].value = formula_date_row
+        ws_menu[f"B{row_idx}"].value = formula_meal_row
         ws_menu[f"A{row_idx}"].number_format = date_format
 
     # meal_counts sheet
@@ -733,9 +803,18 @@ def create_template_excel(path: Path) -> None:
         ws_counts[col].font = Font(bold=True, color=header_font)
     # Count is manual to avoid circular formulas.
 
+    formula_date_counts = (
+        '=IFERROR(IF(ROW()-1 <= {total}, '
+        '{start} + INT((ROW()-2)/4), ""), "")'
+    ).format(total=formula_total, start=start_expr)
+    formula_meal_counts = (
+        '=IFERROR(IF(ROW()-1 <= {total}, '
+        'CHOOSE(MOD(ROW()-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
+    ).format(total=formula_total)
+
     for row_idx in range(2, 1502):
-        ws_counts[f"A{row_idx}"].value = formula_date
-        ws_counts[f"B{row_idx}"].value = formula_meal
+        ws_counts[f"A{row_idx}"].value = formula_date_counts
+        ws_counts[f"B{row_idx}"].value = formula_meal_counts
         ws_counts[f"C{row_idx}"].value = ""
         ws_counts[f"A{row_idx}"].number_format = date_format
 
