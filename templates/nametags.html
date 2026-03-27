@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pushp Events – Name Tags</title>
+  <style>
+    @font-face {
+      font-family: "NotoDeva";
+      src: url("{{ font_path }}");
+    }
+
+    @page {
+      size: A4;
+      margin: 13mm 11mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "NotoDeva", "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      color: #2c2420;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3mm 4mm;
+      width: 100%;
+    }
+
+    /* ── Individual label ─────────────────────────────── */
+    .label {
+      border: 0.6pt solid #ccc5bc;
+      border-radius: 3mm;
+      height: 21mm;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      overflow: hidden;
+      page-break-inside: avoid;
+      background: #ffffff;
+    }
+
+    /* Thin accent stripe at top */
+    .label-top {
+      background: #3d2b1f;
+      height: 2mm;
+      flex-shrink: 0;
+    }
+
+    /* Content area */
+    .label-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4mm 1mm;
+      text-align: center;
+    }
+
+    .item-name {
+      font-size: 9.5pt;
+      font-weight: bold;
+      color: #2c2420;
+      line-height: 1.25;
+      letter-spacing: 0.1pt;
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    .divider {
+      width: 18mm;
+      height: 0.5pt;
+      background: #ddd8d2;
+      margin: 1.5mm auto;
+      flex-shrink: 0;
+    }
+
+    .item-category {
+      font-size: 6pt;
+      color: #9e9189;
+      text-transform: uppercase;
+      letter-spacing: 0.8pt;
+      font-weight: normal;
+    }
+
+    /* Empty filler label (no border, just holds grid space) */
+    .label-empty {
+      height: 21mm;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    {% for item in items %}
+    <div class="label">
+      <div class="label-top"></div>
+      <div class="label-body">
+        <div class="item-name">{{ item.item }}</div>
+        {% if item.category and item.category != 'Menu' %}
+        <div class="divider"></div>
+        <div class="item-category">{{ item.category }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {# Pad to a multiple of 3 so the last row fills evenly #}
+    {% set remainder = items | length % 3 %}
+    {% if remainder == 1 %}
+      <div class="label-empty"></div>
+      <div class="label-empty"></div>
+    {% elif remainder == 2 %}
+      <div class="label-empty"></div>
+    {% endif %}
+  </div>
+</body>
+</html>

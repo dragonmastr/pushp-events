@@ -7,6 +7,14 @@ This app generates a professional multi-day menu PDF from an Excel file. It prod
 
 When you generate, you choose where the **Generated-menu** folder should be saved.
 
+## Windows Prerequisite
+Before running `Pushp-Menu-Generator.exe` on Windows, install **GTK3 Runtime 64-bit**.
+
+- Install GTK from the packaged ZIP/shared drive provided with the app.
+- Recommended install path:
+  `C:\Program Files\GTK3-Runtime Win64`
+- If GTK is not installed, PDF generation can fail because WeasyPrint depends on GTK libraries.
+
 ---
 
 ## 1. Open the app and select the Excel file

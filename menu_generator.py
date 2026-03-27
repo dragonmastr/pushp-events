@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import PatternFill, Font
 
@@ -225,6 +224,32 @@ def parse_note_lines(raw_text: object) -> List[str]:
 
 # ---------------- EXCEL IO ----------------
 
+def _build_date_meal_exprs() -> Tuple[str, str]:
+    """Return (start_expr, formula_total) for Excel date/meal auto-fill formulas."""
+    start_ref = 'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0))'
+    end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
+    start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
+    end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
+    s1 = f'FIND("/",{start_text})'
+    s2 = f'FIND("/",{start_text},{s1}+1)'
+    e1 = f'FIND("/",{end_text})'
+    e2 = f'FIND("/",{end_text},{e1}+1)'
+    start_d = (
+        f'DATE(VALUE(RIGHT({start_text},4)),'
+        f'VALUE(MID({start_text},{s1}+1,{s2}-{s1}-1)),'
+        f'VALUE(LEFT({start_text},{s1}-1)))'
+    )
+    end_d = (
+        f'DATE(VALUE(RIGHT({end_text},4)),'
+        f'VALUE(MID({end_text},{e1}+1,{e2}-{e1}-1)),'
+        f'VALUE(LEFT({end_text},{e1}-1)))'
+    )
+    start_expr = f'IF(ISNUMBER({start_ref}),{start_ref},IFERROR({start_d},DATEVALUE({start_text})))'
+    end_expr = f'IF(ISNUMBER({end_ref}),{end_ref},IFERROR({end_d},DATEVALUE({end_text})))'
+    formula_total = f'({end_expr} - {start_expr} + 1) * 4'
+    return start_expr, formula_total
+
+
 def read_event_info(xlsx_path: Path) -> Dict[str, object]:
     df = pd.read_excel(xlsx_path, sheet_name="event_info")
     if "key" in df.columns and "value" in df.columns:
@@ -286,28 +311,8 @@ def ensure_meal_counts_sheet(
 
     date_format = "DD/MM/YYYY"
 
-    # Create formula-driven rows so Excel can auto-generate dates and meals
-    start_ref = 'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0))'
-    end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
-    start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
-    end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
-    start_sep1 = f'FIND("/",{start_text})'
-    start_sep2 = f'FIND("/",{start_text},{start_sep1}+1)'
-    end_sep1 = f'FIND("/",{end_text})'
-    end_sep2 = f'FIND("/",{end_text},{end_sep1}+1)'
-    start_ddmmyyyy = (
-        f'DATE(VALUE(RIGHT({start_text},4)), '
-        f'VALUE(MID({start_text},{start_sep1}+1,{start_sep2}-{start_sep1}-1)), '
-        f'VALUE(LEFT({start_text},{start_sep1}-1)))'
-    )
-    end_ddmmyyyy = (
-        f'DATE(VALUE(RIGHT({end_text},4)), '
-        f'VALUE(MID({end_text},{end_sep1}+1,{end_sep2}-{end_sep1}-1)), '
-        f'VALUE(LEFT({end_text},{end_sep1}-1)))'
-    )
-    start_expr = f'IF(ISNUMBER({start_ref}),{start_ref},IFERROR({start_ddmmyyyy},DATEVALUE({start_text})))'
-    end_expr = f'IF(ISNUMBER({end_ref}),{end_ref},IFERROR({end_ddmmyyyy},DATEVALUE({end_text})))'
-    formula_total = f'({end_expr} - {start_expr} + 1) * 4'
+    # Build formula components (reuses shared helper to avoid duplication)
+    start_expr, formula_total = _build_date_meal_exprs()
     formula_date = (
         '=IFERROR(IF(ROW()-1 <= {total}, '
         '{start} + INT((ROW()-2)/4), ""), "")'
@@ -318,15 +323,9 @@ def ensure_meal_counts_sheet(
     ).format(total=formula_total)
     # Count should be entered manually; do not reference total_pax to avoid circular formulas.
 
-    # Pre-fill enough rows for long events
-    for _ in range(2, 1502):
-        ws.append([None, None, None])
-
     for row_idx in range(2, 1502):
-        ws[f"A{row_idx}"].value = formula_date
-        ws[f"B{row_idx}"].value = formula_meal
-        ws[f"C{row_idx}"].value = ""
-        ws[f"A{row_idx}"].number_format = date_format
+        ws.cell(row_idx, 1, formula_date).number_format = date_format
+        ws.cell(row_idx, 2, formula_meal)
 
     wb.save(xlsx_path)
     wb.close()
@@ -608,6 +607,7 @@ def generate_menu_pdf(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    from weasyprint import HTML  # lazy — avoids GTK3 load at startup
     HTML(string=html_out, base_url=str(BASE_DIR)).write_pdf(str(output_path))
 
     if template_path:
@@ -643,8 +643,8 @@ def generate_menu_pdfs(
     base_en = safe_filename(event_name)
     base_hi = safe_filename(event_name_hi)
 
-    output_en = output_dir / f"{base_en}_English.pdf"
-    output_hi = output_dir / f"{base_hi}_Hindi.pdf"
+    output_en = output_dir / f"{base_en} [en].pdf"
+    output_hi = output_dir / f"{base_hi} [hi].pdf"
 
     generate_menu_pdf(
         excel_path,
@@ -722,7 +722,11 @@ def create_template_excel(path: Path) -> None:
     # format start/end date cells in event_info (column B)
     for row_idx, key in enumerate(keys, start=2):
         if key in ("start_date", "end_date"):
-            ws_event[f"B{row_idx}"].number_format = "@"
+            cell = ws_event[f"B{row_idx}"]
+            cell.number_format = "@"
+            # quotePrefix tells Excel 2019+ to always treat this cell as text,
+            # preventing locale-driven auto-conversion of DD/MM/YYYY → wrong serial.
+            cell.quotePrefix = True
 
     # Add data validation to enforce DD/MM/YYYY for start_date and end_date
     try:
@@ -759,27 +763,7 @@ def create_template_excel(path: Path) -> None:
         ws_menu[col].fill = PatternFill("solid", fgColor=header_fill)
         ws_menu[col].font = Font(bold=True, color=header_font)
 
-    start_ref = 'INDEX(event_info!B:B, MATCH("start_date", event_info!A:A, 0))'
-    end_ref = 'INDEX(event_info!B:B, MATCH("end_date", event_info!A:A, 0))'
-    start_text = f'IFERROR(TEXT({start_ref},"dd/mm/yyyy"), {start_ref})'
-    end_text = f'IFERROR(TEXT({end_ref},"dd/mm/yyyy"), {end_ref})'
-    start_sep1 = f'FIND("/",{start_text})'
-    start_sep2 = f'FIND("/",{start_text},{start_sep1}+1)'
-    end_sep1 = f'FIND("/",{end_text})'
-    end_sep2 = f'FIND("/",{end_text},{end_sep1}+1)'
-    start_ddmmyyyy = (
-        f'DATE(VALUE(RIGHT({start_text},4)), '
-        f'VALUE(MID({start_text},{start_sep1}+1,{start_sep2}-{start_sep1}-1)), '
-        f'VALUE(LEFT({start_text},{start_sep1}-1)))'
-    )
-    end_ddmmyyyy = (
-        f'DATE(VALUE(RIGHT({end_text},4)), '
-        f'VALUE(MID({end_text},{end_sep1}+1,{end_sep2}-{end_sep1}-1)), '
-        f'VALUE(LEFT({end_text},{end_sep1}-1)))'
-    )
-    start_expr = f'IF(ISNUMBER({start_ref}),{start_ref},IFERROR({start_ddmmyyyy},DATEVALUE({start_text})))'
-    end_expr = f'IF(ISNUMBER({end_ref}),{end_ref},IFERROR({end_ddmmyyyy},DATEVALUE({end_text})))'
-    formula_total = f'({end_expr} - {start_expr} + 1) * 4'
+    start_expr, formula_total = _build_date_meal_exprs()
 
     for row_idx in range(2, 1502):
         # Use fixed row index in formula so copied cells keep the same date/meal value.
@@ -791,9 +775,8 @@ def create_template_excel(path: Path) -> None:
             '=IFERROR(IF({row}-1 <= {total}, '
             'CHOOSE(MOD({row}-2,4)+1, "Breakfast", "Lunch", "Hi-tea", "Dinner"), ""), "")'
         ).format(row=row_idx, total=formula_total)
-        ws_menu[f"A{row_idx}"].value = formula_date_row
-        ws_menu[f"B{row_idx}"].value = formula_meal_row
-        ws_menu[f"A{row_idx}"].number_format = date_format
+        ws_menu.cell(row_idx, 1, formula_date_row).number_format = date_format
+        ws_menu.cell(row_idx, 2, formula_meal_row)
 
     # meal_counts sheet
     ws_counts = wb.create_sheet("meal_counts")
@@ -813,13 +796,46 @@ def create_template_excel(path: Path) -> None:
     ).format(total=formula_total)
 
     for row_idx in range(2, 1502):
-        ws_counts[f"A{row_idx}"].value = formula_date_counts
-        ws_counts[f"B{row_idx}"].value = formula_meal_counts
-        ws_counts[f"C{row_idx}"].value = ""
-        ws_counts[f"A{row_idx}"].number_format = date_format
+        ws_counts.cell(row_idx, 1, formula_date_counts).number_format = date_format
+        ws_counts.cell(row_idx, 2, formula_meal_counts)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
+
+
+# ---------------- NAME TAGS ----------------
+
+def get_all_menu_items(excel_path: Path) -> List[Dict[str, str]]:
+    """Return unique menu items (deduped by name) sorted alphabetically."""
+    menu_df = read_menu_data(excel_path)
+    seen: set = set()
+    items = []
+    for _, row in menu_df.iterrows():
+        item = clean(row.get("item", ""))
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        items.append({
+            "item": item,
+            "category": clean(row.get("category", "")),
+            "meal": normalize_meal(row.get("meal", "")),
+        })
+    return sorted(items, key=lambda x: x["item"].lower())
+
+
+def generate_name_tags_pdf(excel_path: Path, output_path: Path) -> Path:
+    """Generate a label-sheet PDF with one name tag per unique menu item."""
+    from weasyprint import HTML  # lazy — avoids GTK3 load at startup
+
+    items = get_all_menu_items(excel_path)
+    env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")))
+    template = env.get_template("nametags.html")
+    font_path = str(BASE_DIR / "assets" / "NotoSerifDevanagari-Regular.ttf")
+    html_out = template.render(items=items, font_path=font_path)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    HTML(string=html_out, base_url=str(BASE_DIR)).write_pdf(str(output_path))
+    return output_path
 
 
 # ---------------- RESET ----------------
