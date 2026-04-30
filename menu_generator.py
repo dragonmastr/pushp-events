@@ -161,8 +161,18 @@ def parse_date(value: object) -> Optional[date]:
         return value.date()
     if isinstance(value, date):
         return value
+    s = str(value).strip()
+    if not s:
+        return None
+    # Try explicit formats before relying on pandas inference.
+    # DD/MM/YYYY and DD-MM-YYYY are the expected input formats.
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
     try:
-        parsed = pd.to_datetime(value, errors="coerce", dayfirst=True)
+        parsed = pd.to_datetime(s, errors="coerce", dayfirst=True)
         if pd.isna(parsed):
             return None
         return parsed.date()
@@ -608,7 +618,7 @@ def generate_menu_pdf(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     from weasyprint import HTML  # lazy — avoids GTK3 load at startup
-    HTML(string=html_out, base_url=str(BASE_DIR)).write_pdf(str(output_path))
+    HTML(string=html_out, base_url=BASE_DIR.as_uri() + "/").write_pdf(str(output_path))
 
     if template_path:
         ensure_template_exists(Path(template_path), excel_path)
@@ -719,14 +729,15 @@ def create_template_excel(path: Path) -> None:
         else:
             ws_event.append([key, ""])
 
-    # format start/end date cells in event_info (column B)
+    # Format start/end date cells as DD/MM/YYYY date cells (not text).
+    # Storing as a date serial avoids locale-driven ambiguity — openpyxl reads
+    # serials as datetime objects, which parse_date handles with zero ambiguity.
+    # For the edge case where Excel leaves the value as text (e.g. day > 12 on
+    # US locale), parse_date explicitly tries DD/MM/YYYY and DD-MM-YYYY first.
     for row_idx, key in enumerate(keys, start=2):
         if key in ("start_date", "end_date"):
             cell = ws_event[f"B{row_idx}"]
-            cell.number_format = "@"
-            # quotePrefix tells Excel 2019+ to always treat this cell as text,
-            # preventing locale-driven auto-conversion of DD/MM/YYYY → wrong serial.
-            cell.quotePrefix = True
+            cell.number_format = "DD/MM/YYYY"
 
     # Add data validation to enforce DD/MM/YYYY for start_date and end_date
     try:
@@ -746,10 +757,10 @@ def create_template_excel(path: Path) -> None:
                 ),
                 allow_blank=True,
             )
-            dv.error = "Please enter date as DD/MM/YYYY (e.g., 01/03/2026)."
-            dv.errorTitle = "Invalid date format"
-            dv.prompt = "Enter date in DD/MM/YYYY format."
-            dv.promptTitle = "Date format"
+            dv.error = "Please enter a valid date (e.g., 15/04/2026 or 15-04-2026)."
+            dv.errorTitle = "Invalid date"
+            dv.prompt = "Enter date as DD/MM/YYYY (e.g., 15/04/2026)."
+            dv.promptTitle = "Date"
             dv.showErrorMessage = True
             ws_event.add_data_validation(dv)
             dv.add(ws_event[cell_ref])
@@ -825,16 +836,45 @@ def get_all_menu_items(excel_path: Path) -> List[Dict[str, str]]:
 
 def generate_name_tags_pdf(excel_path: Path, output_path: Path) -> Path:
     """Generate a label-sheet PDF with one name tag per unique menu item."""
+    import base64
     from weasyprint import HTML  # lazy — avoids GTK3 load at startup
 
     items = get_all_menu_items(excel_path)
+    event_info = read_event_info(excel_path)
+
+    caterer_name = clean(event_info.get("caterer_name", "")) or "PUSHP EVENTS"
+    caterer_phone = clean(event_info.get("caterer_phone", ""))
+
+    # Resolve logo: prefer event_info path, then default asset
+    logo_data_uri = ""
+    logo_path_raw = clean(event_info.get("logo_path", ""))
+    candidates = [
+        Path(logo_path_raw) if logo_path_raw else None,
+        BASE_DIR / "assets" / "pushp-event-logo.png",
+        BASE_DIR / "assets" / "logo.png",
+    ]
+    for candidate in candidates:
+        if candidate and candidate.exists():
+            mime = "image/png" if candidate.suffix.lower() == ".png" else "image/jpeg"
+            logo_data_uri = (
+                f"data:{mime};base64,"
+                + base64.b64encode(candidate.read_bytes()).decode()
+            )
+            break
+
     env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")))
     template = env.get_template("nametags.html")
-    font_path = str(BASE_DIR / "assets" / "NotoSerifDevanagari-Regular.ttf")
-    html_out = template.render(items=items, font_path=font_path)
+    font_path = "assets/NotoSerifDevanagari-Regular.ttf"
+    html_out = template.render(
+        items=items,
+        font_path=font_path,
+        caterer_name=caterer_name,
+        caterer_phone=caterer_phone,
+        logo_data_uri=logo_data_uri,
+    )
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    HTML(string=html_out, base_url=str(BASE_DIR)).write_pdf(str(output_path))
+    HTML(string=html_out, base_url=BASE_DIR.as_uri() + "/").write_pdf(str(output_path))
     return output_path
 
 

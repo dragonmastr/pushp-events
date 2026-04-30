@@ -33,6 +33,15 @@ pyinstaller --noconfirm --clean --windowed --onefile ^
   --name "Pushp-Menu-Generator" ^
   --hidden-import menu_generator ^
   --hidden-import weasyprint ^
+  --hidden-import weasyprint.text.line_break ^
+  --hidden-import weasyprint.document ^
+  --hidden-import weasyprint.html ^
+  --hidden-import tinycss2 ^
+  --hidden-import cssselect2 ^
+  --hidden-import html5lib ^
+  --hidden-import PIL ^
+  --hidden-import PIL.Image ^
+  --hidden-import PIL.ImageTk ^
   %ICON_ARG% ^
   --add-data "templates;templates" ^
   --add-data "assets;assets" ^

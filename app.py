@@ -12,9 +12,13 @@ def configure_gtk_runtime() -> None:
         os.environ["PATH"] = str(gtk_bin) + os.pathsep + os.environ.get("PATH", "")
         return
     if os.name == "nt":
-        system_gtk_bin = Path("C:/Program Files/GTK3-Runtime Win64/bin")
-        if system_gtk_bin.exists():
-            os.environ["PATH"] = str(system_gtk_bin) + os.pathsep + os.environ.get("PATH", "")
+        for system_gtk_bin in (
+            Path("C:/Program Files/GTK3-Runtime Win64/bin"),
+            Path("C:/Program Files (x86)/GTK3-Runtime Win32/bin"),
+        ):
+            if system_gtk_bin.exists():
+                os.environ["PATH"] = str(system_gtk_bin) + os.pathsep + os.environ.get("PATH", "")
+                break
 
 
 configure_gtk_runtime()
