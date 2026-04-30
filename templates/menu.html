@@ -11,7 +11,7 @@
     }
 
     @page {
-      margin: 28mm 20mm;
+      margin: 26mm 20mm;
       @bottom-center {
         content: element(footer);
       }
@@ -23,12 +23,15 @@
 
     body {
       font-family: "NotoDeva", serif;
-      background-color: #f9f7f2;
-      color: #2f2727;
+      background-color: #f8f5ee;
+      color: #2a1f1f;
       margin: 0;
       padding: 0;
     }
 
+    /* ════════════════════════════
+       COVER PAGE
+    ════════════════════════════ */
     .cover {
       page-break-after: always;
       padding-top: 0;
@@ -40,13 +43,24 @@
 
     .cover-card {
       transform: translateY(-5mm);
-    }
-
-    .cover-card {
-      border: 1px solid #d8d2c8;
-      padding: 22px 26px 28px;
+      border: 1.5pt solid #c89a3a;
+      border-top: 6pt solid #6b0818;
+      padding: 22px 28px 30px;
       background: #fffdf8;
       width: 100%;
+      position: relative;
+    }
+
+    /* Inner gold hairline frame */
+    .cover-card::before {
+      content: "";
+      position: absolute;
+      top: 8pt;
+      right: 8pt;
+      bottom: 8pt;
+      left: 8pt;
+      border: 0.5pt solid rgba(200, 154, 58, 0.35);
+      pointer-events: none;
     }
 
     .logo {
@@ -62,13 +76,32 @@
       image-rendering: auto;
     }
 
+    /* Decorative divider used before/after event title */
+    .ornament-rule {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .ornament-rule .orn-line {
+      flex: 1;
+      height: 0.5pt;
+      background: linear-gradient(to right, transparent, #c89a3a 40%, #c89a3a 60%, transparent);
+    }
+    .ornament-rule .orn-mark {
+      font-size: 7pt;
+      color: #c89a3a;
+      letter-spacing: 3pt;
+    }
+
     .event-title {
-      font-size: 30px;
+      font-size: 29px;
       font-weight: 900;
-      margin: 20px auto 18px;
-      color: #2b2222;
+      margin: 4px auto 4px;
+      color: #2a1818;
       text-align: center;
       max-width: 90%;
+      letter-spacing: 0.5px;
     }
 
     .event-title.spacer {
@@ -78,27 +111,40 @@
     .event-meta {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 18px;
+      gap: 10px 20px;
       font-size: 14px;
-      margin-top: 35mm;
+      margin-top: 30mm;
       margin-bottom: 18px;
     }
 
     .event-meta .label {
-      font-size: 11px;
-      letter-spacing: 1.5px;
+      font-size: 9.5px;
+      letter-spacing: 1.8px;
       text-transform: uppercase;
-      color: #8a8075;
-      margin-bottom: 4px;
+      color: #6b0818;
+      margin-bottom: 3px;
+      font-weight: 700;
     }
 
     .caterer {
       margin-top: 0;
       padding-top: 12px;
-      border-top: 1px solid #ded6cb;
+      border-top: 1pt solid #d5c4b5;
       font-size: 14px;
     }
 
+    .caterer .label {
+      font-size: 9.5px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: #6b0818;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+
+    /* ════════════════════════════
+       DAY PAGES
+    ════════════════════════════ */
     .day {
       page-break-after: always;
       padding-top: 6mm;
@@ -113,112 +159,157 @@
     }
 
     .day-date {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 12px;
-      color: #3a2f2f;
-      border-bottom: 1px solid #cbbfb3;
-      padding-bottom: 8px;
+      margin-bottom: 14px;
+      color: #6b0818;
+      padding-bottom: 10px;
+      border-bottom: 2pt solid #6b0818;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       gap: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Thin gold hairline below the thick burgundy rule */
+    .day-date-sub {
+      width: 100%;
+      height: 0.5pt;
+      background: linear-gradient(to right, transparent, #c89a3a 25%, #c89a3a 75%, transparent);
+      margin-top: 3pt;
     }
 
     .day-count {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 400;
       color: #6e645a;
     }
 
     .day-content {
       column-count: 2;
-      column-gap: 52px;
-      column-rule: 1px solid #e0d7cd;
+      column-gap: 48px;
+      column-rule: 0.5pt solid #d5c4b5;
       column-fill: auto;
       padding-bottom: 8px;
-      border-bottom: 1px solid #e0d7cd;
+      border-bottom: 0.5pt solid #d5c4b5;
     }
 
+    /* ════════════════════════════
+       MEAL SECTIONS
+    ════════════════════════════ */
     .meal {
       margin-top: 0;
       break-inside: auto;
       page-break-inside: auto;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
-
 
     .meal-title {
       margin-bottom: 8px;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #efe7dd;
+      padding: 5px 8px 6px 10px;
+      border-left: 3pt solid #6b0818;
+      background-color: rgba(107, 8, 24, 0.05);
+      color: #2a1818;
     }
 
-
-
     .meal-title .pax {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 400;
       color: #6e645a;
       margin-left: auto;
-      padding-right: 10px;
+      padding-right: 0;
     }
 
+    /* ════════════════════════════
+       CATEGORIES & ITEMS
+    ════════════════════════════ */
     .category {
       font-weight: 700;
-      margin-top: 8px;
-      font-size: 14px;
-      color: #463b36;
+      margin-top: 9px;
+      margin-bottom: 2px;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #6b0818;
       break-inside: avoid;
     }
 
     ul {
-      margin: 6px 0 0 18px;
-      padding: 0;
+      margin: 4px 0 0 0;
+      padding-left: 4px;
+      list-style: none;
       break-inside: avoid;
     }
 
     li {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       font-size: 13px;
+      line-height: 1.4;
     }
 
+    li::before {
+      content: "◆ ";
+      color: #c89a3a;
+      font-size: 6pt;
+      vertical-align: middle;
+    }
+
+    /* ════════════════════════════
+       NOTES PAGE
+    ════════════════════════════ */
     .notes-page {
       page-break-before: always;
       padding-top: 8mm;
     }
 
     .notes-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 12px;
-      color: #3a2f2f;
-      border-bottom: 1px solid #cbbfb3;
-      padding-bottom: 8px;
+      margin-bottom: 14px;
+      color: #6b0818;
+      padding-bottom: 10px;
+      border-bottom: 2pt solid #6b0818;
+      letter-spacing: 0.5px;
     }
 
     .notes-list {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 4px;
+      list-style: none;
     }
 
     .notes-list li {
       font-size: 15px;
-      margin-bottom: 8px;
-      line-height: 1.4;
+      margin-bottom: 10px;
+      line-height: 1.45;
     }
 
+    .notes-list li::before {
+      content: "◆ ";
+      color: #c89a3a;
+      font-size: 7pt;
+      vertical-align: middle;
+    }
+
+    /* ════════════════════════════
+       RUNNING FOOTER
+    ════════════════════════════ */
     #footer {
       position: running(footer);
       text-align: center;
-      font-size: 10px;
-      color: #887f75;
+      font-size: 9px;
+      color: #8a7868;
+      letter-spacing: 1px;
+      border-top: 0.5pt solid #d5c4b5;
+      padding-top: 4px;
+      text-transform: uppercase;
     }
   </style>
 </head>
@@ -231,7 +322,19 @@
         <img src="{{ logo_path }}" alt="">
       </div>
 
+      <div class="ornament-rule">
+        <div class="orn-line"></div>
+        <span class="orn-mark">◆ ◆ ◆</span>
+        <div class="orn-line"></div>
+      </div>
+
       <div class="event-title spacer">{{ event.event_name }}</div>
+
+      <div class="ornament-rule">
+        <div class="orn-line"></div>
+        <span class="orn-mark">◆ ◆ ◆</span>
+        <div class="orn-line"></div>
+      </div>
 
       <div class="event-meta">
         <div>
@@ -276,6 +379,7 @@
   <div class="day">
     <div class="day-date">
       <span>{{ page.date }}</span>
+      <div class="day-date-sub"></div>
       {% if page.count %}
       <span class="day-count">{{ labels.count }}: {{ page.count }}</span>
       {% endif %}
@@ -317,7 +421,7 @@
   {% endif %}
 
   <div id="footer">
-    {{ labels.generated_on }} {{ generated_on }} · {{ labels.brand }}
+    {{ labels.generated_on }} {{ generated_on }} &nbsp;·&nbsp; {{ labels.brand }}
   </div>
 
 </body>

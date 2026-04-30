@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pushp Events – Name Tags</title>
+  <title>Pushp Events – Food Name Plates</title>
   <style>
     @font-face {
       font-family: "NotoDeva";
@@ -11,114 +11,350 @@
 
     @page {
       size: A4;
-      margin: 13mm 11mm;
+      margin: 10mm 14mm;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: "NotoDeva", "Helvetica Neue", Arial, sans-serif;
-      background: #ffffff;
-      color: #2c2420;
+      font-family: "NotoDeva", Georgia, "Times New Roman", serif;
+      background: #fff;
     }
 
+    /* ── Block flow instead of grid — paginates reliably in WeasyPrint ── */
     .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3mm 4mm;
-      width: 100%;
+      display: block;
     }
 
-    /* ── Individual label ─────────────────────────────── */
-    .label {
-      border: 0.6pt solid #ccc5bc;
+    /* ── Outer gold border frame ── */
+    .card-wrap {
+      height: 85mm;
+      border: 2.5pt solid #a07830;
       border-radius: 3mm;
-      height: 21mm;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      overflow: hidden;
+      padding: 2pt;
+      margin-bottom: 5mm;
+      background: linear-gradient(
+        to bottom,
+        #7a5010 0%,
+        #c8973a 8%,
+        #f5e49a 22%,
+        #e8d070 38%,
+        #d4a840 50%,
+        #e8d070 62%,
+        #f5e49a 78%,
+        #c8973a 92%,
+        #7a5010 100%
+      );
       page-break-inside: avoid;
-      background: #ffffff;
+      break-inside: avoid;
+      box-shadow: 0 2pt 12pt rgba(50,25,5,0.28);
     }
 
-    /* Thin accent stripe at top */
-    .label-top {
-      background: #3d2b1f;
-      height: 2mm;
-      flex-shrink: 0;
-    }
-
-    /* Content area */
-    .label-body {
-      flex: 1;
+    /* ── Inner card ── */
+    .card {
+      height: 100%;
+      border-radius: 2mm;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ══════════ TOP BURGUNDY STRIP ══════════ */
+    .card-topstrip {
+      height: 5mm;
+      flex-shrink: 0;
+      background: linear-gradient(135deg,
+        #2a0208 0%, #5e0614 25%, #8c1028 55%, #6b0818 75%, #3d0410 100%);
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 4mm 1mm;
+    }
+    .strip-line {
+      flex: 1;
+      height: 0.4pt;
+      background: rgba(245, 220, 140, 0.5);
+      margin: 0 5mm;
+    }
+    .strip-ornament {
+      font-size: 5.5pt;
+      color: #f5e8a0;
+      letter-spacing: 4pt;
+    }
+
+    /* ══════════ DISH NAME BODY — pure white, maximum text contrast ══════════ */
+    .card-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      padding: 2mm 14mm;
+    }
+
+    /* Corner-only floral SVG — never touches the text center */
+    .floral-bg {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .floral-bg svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Dish name — bold, maximum contrast, fully legible */
+    .dish-name {
+      position: relative;
+      z-index: 2;
+      font-size: 48pt;
+      font-weight: 700;
+      color: #120303;
       text-align: center;
-    }
-
-    .item-name {
-      font-size: 9.5pt;
-      font-weight: bold;
-      color: #2c2420;
-      line-height: 1.25;
-      letter-spacing: 0.1pt;
+      line-height: 1.18;
+      letter-spacing: 0.5pt;
       word-break: break-word;
-      hyphens: auto;
     }
 
-    .divider {
-      width: 18mm;
-      height: 0.5pt;
-      background: #ddd8d2;
-      margin: 1.5mm auto;
+    /* ══════════ GOLD DIVIDER BAND ══════════ */
+    .card-goldband {
+      height: 3mm;
+      flex-shrink: 0;
+      background: linear-gradient(90deg,
+        #5a3a08 0%,
+        #c89a3a 10%,
+        #f5e8a0 28%,
+        #faf0b0 50%,
+        #f5e8a0 72%,
+        #c89a3a 90%,
+        #5a3a08 100%
+      );
+    }
+
+    /* ══════════ WHITE FOOTER — gold logo on white = perfect visibility ══════════ */
+    .card-footer {
+      height: 24mm;
+      flex-shrink: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5mm;
+      padding: 0 9mm;
+      position: relative;
+    }
+
+    /* Thin gold hairlines top and bottom for refinement */
+    .card-footer::before {
+      content: "";
+      position: absolute;
+      top: 2mm;
+      bottom: 2mm;
+      left: 5mm;
+      right: 5mm;
+      border-top: 0.5pt solid rgba(180, 130, 40, 0.40);
+      border-bottom: 0.5pt solid rgba(180, 130, 40, 0.40);
+      pointer-events: none;
+    }
+
+    /* Logo — white bg merges into white footer, gold crest is fully visible */
+    .footer-logo {
+      height: 20mm;
+      width: auto;
+      max-width: 36mm;
+      object-fit: contain;
       flex-shrink: 0;
     }
 
-    .item-category {
-      font-size: 6pt;
-      color: #9e9189;
-      text-transform: uppercase;
-      letter-spacing: 0.8pt;
-      font-weight: normal;
+    /* Vertical gold separator */
+    .footer-vline {
+      width: 0.5pt;
+      height: 13mm;
+      background: linear-gradient(to bottom,
+        transparent, #c89a3a 30%, #c89a3a 70%, transparent);
+      flex-shrink: 0;
     }
 
-    /* Empty filler label (no border, just holds grid space) */
-    .label-empty {
-      height: 21mm;
+    /* Brand + phone — dark burgundy on white, crisp and clean */
+    .footer-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1mm;
+    }
+    .footer-brand {
+      font-size: 10pt;
+      font-weight: bold;
+      color: #6b0818;
+      letter-spacing: 2.5pt;
+      text-transform: uppercase;
+    }
+    .footer-tagline {
+      font-size: 6.5pt;
+      color: #8a6028;
+      letter-spacing: 2pt;
+      text-transform: uppercase;
+    }
+    .footer-phone {
+      font-size: 10pt;
+      font-weight: bold;
+      color: #2a1008;
+      letter-spacing: 0.5pt;
+    }
+
+    /* ══════════ BOTTOM BURGUNDY STRIP ══════════ */
+    .card-botstrip {
+      height: 4mm;
+      flex-shrink: 0;
+      background: linear-gradient(135deg,
+        #2a0208 0%, #5e0614 25%, #8c1028 55%, #6b0818 75%, #3d0410 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-empty {
+      height: 85mm;
     }
   </style>
 </head>
 <body>
   <div class="grid">
     {% for item in items %}
-    <div class="label">
-      <div class="label-top"></div>
-      <div class="label-body">
-        <div class="item-name">{{ item.item }}</div>
-        {% if item.category and item.category != 'Menu' %}
-        <div class="divider"></div>
-        <div class="item-category">{{ item.category }}</div>
-        {% endif %}
+    <div class="card-wrap">
+      <div class="card">
+
+        <div class="card-topstrip">
+          <div class="strip-line"></div>
+          <span class="strip-ornament">✦ ✦ ✦</span>
+          <div class="strip-line"></div>
+        </div>
+
+        <div class="card-body">
+
+          <!-- Corner-only floral — center is fully clear for text -->
+          <div class="floral-bg">
+            <svg viewBox="0 0 540 150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+
+              <!-- ── Inner border frame ── -->
+              <rect x="10" y="6" width="520" height="138" rx="5" ry="5"
+                fill="none" stroke="#c89a3a" stroke-width="0.8" opacity="0.30"/>
+              <rect x="16" y="12" width="508" height="126" rx="2" ry="2"
+                fill="none" stroke="#c89a3a" stroke-width="0.4" opacity="0.18"/>
+
+              <!-- Corner diamond markers -->
+              <polygon points="10,6  18,14  10,22  2,14"  fill="#c89a3a" opacity="0.38"/>
+              <polygon points="530,6  538,14  530,22  522,14" fill="#c89a3a" opacity="0.38"/>
+              <polygon points="10,128  18,136  10,144  2,136"  fill="#c89a3a" opacity="0.38"/>
+              <polygon points="530,128  538,136  530,144  522,136" fill="#c89a3a" opacity="0.38"/>
+
+              <!-- ── Top-left corner flower (stays in corner, max radius ~55px from corner) ── -->
+              <g opacity="0.24" fill="#d86080">
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(0,38,28)"/>
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(60,38,28)"/>
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(120,38,28)"/>
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(180,38,28)"/>
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(240,38,28)"/>
+                <ellipse cx="38" cy="28" rx="7" ry="20" transform="rotate(300,38,28)"/>
+                <circle cx="38" cy="28" r="7" fill="#f0b060"/>
+                <circle cx="38" cy="28" r="3" fill="#fffef8"/>
+              </g>
+              <g opacity="0.18" fill="#507038">
+                <ellipse cx="72" cy="24" rx="3.5" ry="12" transform="rotate(-30,72,24)"/>
+                <ellipse cx="58" cy="50" rx="3.5" ry="11" transform="rotate(55,58,50)"/>
+              </g>
+
+              <!-- ── Top-right corner flower ── -->
+              <g opacity="0.24" fill="#d86080">
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(0,502,28)"/>
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(60,502,28)"/>
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(120,502,28)"/>
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(180,502,28)"/>
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(240,502,28)"/>
+                <ellipse cx="502" cy="28" rx="7" ry="20" transform="rotate(300,502,28)"/>
+                <circle cx="502" cy="28" r="7" fill="#f0b060"/>
+                <circle cx="502" cy="28" r="3" fill="#fffef8"/>
+              </g>
+              <g opacity="0.18" fill="#507038">
+                <ellipse cx="468" cy="24" rx="3.5" ry="12" transform="rotate(30,468,24)"/>
+                <ellipse cx="482" cy="50" rx="3.5" ry="11" transform="rotate(125,482,50)"/>
+              </g>
+
+              <!-- ── Bottom-left corner flower ── -->
+              <g opacity="0.24" fill="#9050b8">
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(0,38,122)"/>
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(60,38,122)"/>
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(120,38,122)"/>
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(180,38,122)"/>
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(240,38,122)"/>
+                <ellipse cx="38" cy="122" rx="7" ry="20" transform="rotate(300,38,122)"/>
+                <circle cx="38" cy="122" r="7" fill="#f0b060"/>
+                <circle cx="38" cy="122" r="3" fill="#fffef8"/>
+              </g>
+              <g opacity="0.18" fill="#507038">
+                <ellipse cx="72" cy="126" rx="3.5" ry="12" transform="rotate(30,72,126)"/>
+                <ellipse cx="58" cy="100" rx="3.5" ry="11" transform="rotate(-55,58,100)"/>
+              </g>
+
+              <!-- ── Bottom-right corner flower ── -->
+              <g opacity="0.24" fill="#9050b8">
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(0,502,122)"/>
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(60,502,122)"/>
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(120,502,122)"/>
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(180,502,122)"/>
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(240,502,122)"/>
+                <ellipse cx="502" cy="122" rx="7" ry="20" transform="rotate(300,502,122)"/>
+                <circle cx="502" cy="122" r="7" fill="#f0b060"/>
+                <circle cx="502" cy="122" r="3" fill="#fffef8"/>
+              </g>
+              <g opacity="0.18" fill="#507038">
+                <ellipse cx="468" cy="126" rx="3.5" ry="12" transform="rotate(-30,468,126)"/>
+                <ellipse cx="482" cy="100" rx="3.5" ry="11" transform="rotate(55,482,100)"/>
+              </g>
+
+              <!-- ── Edge vines — along borders only, not crossing center ── -->
+              <g opacity="0.13" stroke="#507038" stroke-width="1.2" fill="none">
+                <!-- top edge vines -->
+                <path d="M60,24 Q110,14 160,28"/>
+                <path d="M480,24 Q430,14 380,28"/>
+                <!-- bottom edge vines -->
+                <path d="M60,126 Q110,136 160,122"/>
+                <path d="M480,126 Q430,136 380,122"/>
+              </g>
+
+            </svg>
+          </div>
+
+          <div class="dish-name">{{ item.item }}</div>
+        </div>
+
+        <div class="card-goldband"></div>
+
+        <div class="card-footer">
+          {% if logo_data_uri %}
+          <img class="footer-logo" src="{{ logo_data_uri }}" alt="logo">
+          <div class="footer-vline"></div>
+          {% endif %}
+          <div class="footer-text">
+            <div class="footer-brand">{{ caterer_name }}</div>
+            <div class="footer-tagline">Catering &amp; Events</div>
+            {% if caterer_phone %}
+            <div class="footer-phone">📞 {{ caterer_phone }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-botstrip">
+          <div class="strip-line"></div>
+          <span class="strip-ornament">✦ ✦ ✦</span>
+          <div class="strip-line"></div>
+        </div>
+
       </div>
     </div>
     {% endfor %}
-
-    {# Pad to a multiple of 3 so the last row fills evenly #}
-    {% set remainder = items | length % 3 %}
-    {% if remainder == 1 %}
-      <div class="label-empty"></div>
-      <div class="label-empty"></div>
-    {% elif remainder == 2 %}
-      <div class="label-empty"></div>
-    {% endif %}
   </div>
 </body>
 </html>
